@@ -1,28 +1,38 @@
 local Bloxfudge: {
-	Compile: (string) -> string;
+	Bytecode: (string) -> string;
+	Transpile: (string) -> string;
 	Run: (string) -> nil;
 } = {}
 
 do
-	local decompressedTokens: {[string]: string} = {}
-	decompressedTokens["1"] = "i-=1 "
-	decompressedTokens["2"] = "i+=1 "
-	decompressedTokens["3"] = "c[i]+=1 "
-	decompressedTokens["4"] = "c[i]-=1 "
-	decompressedTokens["5"] = "b(o,c,i)"
-	decompressedTokens["6"] = "p(o)"
-	decompressedTokens["7"] = "while c[i]~=0 "
-	decompressedTokens["8"] = "end "
-
-	local compressedTokens: {[string]: string} = {}
-	compressedTokens[">"] = "1"
-	compressedTokens["<"] = "2"
-	compressedTokens["+"] = "3"
-	compressedTokens["-"] = "4"
-	compressedTokens["^"] = "5"
-	compressedTokens["!"] = "6"
-	compressedTokens["["] = "7"
-	compressedTokens["]"] = "8"
+	local decompressedTokens: {[string]: string} = {
+		["q"] = "i-=";
+		["w"] = "i+=";
+		["e"] = "c[i]+=";
+		["r"] = "c[i]-=";
+		["t"] = "b(o,c,i)";
+		["y"] = "p(o)";
+		["u"] = "while c[i]~=0 ";
+		["i"] = "end "
+	}
+	
+	local compressedTokens: {[string]: string} = {
+		["<"] = "q";
+		[">"] = "w";
+		["+"] = "e";
+		["-"] = "r";
+		["^"] = "t";
+		["!"] = "y";
+		["["] = "u";
+		["]"] = "i"
+	}
+	
+	local concattableTokens: {[string]: boolean} = {
+		["q"] = true;
+		["w"] = true;
+		["e"] = true;
+		["r"] = true;
+	}
 
 	local env: {
 		t: <V>(number, V?) -> {V};
@@ -39,32 +49,64 @@ do
 		end,
 	}
 
-	function Bloxfudge.Compile(src: string): string
+	function Bloxfudge.Bytecode(src: string): string
 		local str: string = ""
 		
+		local concatNum: number = 1
 		for i: number = 1, #src do
 			local ch: string = src:sub(i, i)
+			local nextCh: string? = src:sub(i + 1, i + 1)
 			local token: string? = compressedTokens[ch]
-			
+
 			if token then
-				str = string.format("%s%s", str, token)
+				local concattable: boolean? = concattableTokens[token]
+				if concattable and nextCh == ch then
+					concatNum += 1
+					continue
+				elseif concattable then
+					local prevToken: string = compressedTokens[ch]
+					token = ("%s%s"):format(prevToken, if concatNum > 1 then tostring(concatNum) else "")
+
+					concatNum = 1
+				end
+				
+				str = ("%s%s"):format(str, token)
+			end
+		end
+
+		return str
+	end
+	
+	function Bloxfudge.Transpile(bytecode: string)
+		local native: string = ""
+		
+		local curToken: string = bytecode:sub(1, 1)
+		local numStr: string = ""
+		for i: number = 2, #bytecode + 1 do
+			local token: string = bytecode:sub(i, i)
+			
+			if tonumber(token) ~= nil then
+				numStr = ("%s%s"):format(numStr, token)
+			else
+				local decTok: string = decompressedTokens[curToken]
+				local tokStr: string = if numStr == "" then decTok else ("%s%s "):format(decTok, numStr)
+				native = ("%s%s"):format(native, tokStr)
+				
+				curToken = token
+				numStr = ""
 			end
 		end
 		
-		return str
+		return native
 	end
 
-	function Bloxfudge.Run(src: string)
-		local str: string = "local c:{number}=t(1000, 0)local o:{string}={''}local i:number=1 "
-		for i: number = 1, #src do
-			local ch: string = src:sub(i, i)
-			str = string.format("%s%s", str, decompressedTokens[ch])
-		end
-		
-		local Func = loadstring(str)
-		
+	function Bloxfudge.Run(native: string)
+		local lua: string = ("local c:{number}=t(1000, 0)local o:{string}={''}local i:number=1 %s"):format(native)
+
+		local Func = loadstring(lua)
+
 		setfenv(Func, env)
-		
+
 		Func()
 	end
 end

@@ -29,9 +29,51 @@ ___
 ++++++++++++++++++++++++++^++++++++++++++++++
 ++++++^+++^------^--------^------------------
 ---------------------------------------------
-----^-----------------------^!
+----^!
 ```
 ```
 Hello World!
 ```
 ___
+# Benchmark
+```lua
+-- benchmark for the hello world program
+-- code:
+local cmps = os.clock()
+
+local bytecode = Bloxfudge.Bytecode([[
++++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++^+++++++++++++++++
+++++++++++++^+++++++^^+++^-------------------
+---------------------------------------------
+---------------^+++++++++++++++++++++++++++++
+++++++++++++++++++++++++++^++++++++++++++++++
+++++++^+++^------^--------^------------------
+---------------------------------------------
+----^!
+]])
+
+local cmpe = os.clock()
+print(("[BYTECODE]: %fs"):format(cmpe - cmps))
+
+local tps = os.clock()
+
+local native = Bloxfudge.Transpile(bytecode)
+
+local tpe = os.clock()
+print(("[TRANSPILE]: %fs"):format(tpe - tps))
+
+local runs = os.clock()
+
+Bloxfudge.Run(native)
+
+local rune = os.clock()
+print(("[RUN]: %fs"):format(tpe - tps))
+
+--output:
+--[[
+	[BYTECODE]: 0.000110s
+	[TRANSPILE]: 0.000062s
+	[RUN] 0.000062s
+]]
+```
