@@ -15,8 +15,8 @@ commands:
 ^ -- push cell to the output buffer
 ! -- print and clear the output buffer
 
-[ -- start loop, remains active while the current cell is not equal to 0
-] -- end loop
+( -- start loop, remains active while the current cell is not equal to 0
+) -- end loop
 ```
 ___
 # "Hello World" Example
