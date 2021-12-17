@@ -39,41 +39,55 @@ ___
 ```lua
 -- benchmark for the hello world program
 -- code:
-local cmps = os.clock()
+local btcTimes = {}
+local trplTimes = {}
+local runTimes = {}
 
-local bytecode = Bloxfudge.Bytecode([[
-+++++++++++++++++++++++++++++++++++++++++++++
-+++++++++++++++++++++++++++^+++++++++++++++++
-++++++++++++^+++++++^^+++^-------------------
----------------------------------------------
----------------^+++++++++++++++++++++++++++++
-++++++++++++++++++++++++++^++++++++++++++++++
-++++++^+++^------^--------^------------------
----------------------------------------------
-----^!
-]])
+for i = 1, 100 do
+	task.wait()
+	
+	local cmps = os.clock()
+	local bytecode = Bloxfudge.Bytecode([[
+		+++++++++++++++++++++++++++++++++++++++++++++
+		+++++++++++++++++++++++++++^+++++++++++++++++
+		++++++++++++^+++++++^^+++^-------------------
+		---------------------------------------------
+		---------------^+++++++++++++++++++++++++++++
+		++++++++++++++++++++++++++^++++++++++++++++++
+		++++++^+++^------^--------^------------------
+		---------------------------------------------
+		----^!
+	]])
+	table.insert(btcTimes, os.clock() - cmps)
+	
+	task.wait()
+	
+	local tps = os.clock()
+	local native = Bloxfudge.Transpile(bytecode)
+	table.insert(trplTimes, os.clock() - tps)
+	
+	task.wait()
 
-local cmpe = os.clock()
-print(("[BYTECODE]: %fs"):format(cmpe - cmps))
+	local runs = os.clock()
+	Bloxfudge.Run(native)
+	table.insert(runTimes, os.clock() - runs)
+end
 
-local tps = os.clock()
+local function Avg(t)
+	local n = 0
+	for i, v in ipairs(t) do
+		n += v
+	end
+	
+	return n / #t
+end
 
-local native = Bloxfudge.Transpile(bytecode)
+print(("[BYTECODE]: %.8fs"):format(Avg(btcTimes)))
+print(("[TRANSPILE]: %.8fs"):format(Avg(trplTimes)))
+print(("[RUN]: %.8fs"):format(Avg(runTimes)))
 
-local tpe = os.clock()
-print(("[TRANSPILE]: %fs"):format(tpe - tps))
-
-local runs = os.clock()
-
-Bloxfudge.Run(native)
-
-local rune = os.clock()
-print(("[RUN]: %fs"):format(tpe - tps))
-
---output:
---[[
-	[BYTECODE]: 0.000110s
-	[TRANSPILE]: 0.000062s
-	[RUN] 0.000062s
-]]
+--output on my machine:
+	[BYTECODE]: 0.00011561s
+  	[TRANSPILE]: 0.00005262s
+  	[RUN]: 0.00023638s
 ```

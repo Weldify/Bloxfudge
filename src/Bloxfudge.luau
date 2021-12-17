@@ -12,7 +12,7 @@ do
 		["r"] = "c[i]-=";
 		["t"] = "b(o,c,i)";
 		["y"] = "p(o)";
-		["u"] = "while c[i]~=0 ";
+		["u"] = "while(c[i]~=0)do ";
 		["i"] = "end "
 	}
 	
@@ -23,8 +23,8 @@ do
 		["-"] = "r";
 		["^"] = "t";
 		["!"] = "y";
-		["["] = "u";
-		["]"] = "i"
+		["("] = "u";
+		[")"] = "i"
 	}
 	
 	local concattableTokens: {[string]: boolean} = {
@@ -89,7 +89,7 @@ do
 				numStr = ("%s%s"):format(numStr, token)
 			else
 				local decTok: string = decompressedTokens[curToken]
-				local tokStr: string = if numStr == "" then decTok else ("%s%s "):format(decTok, numStr)
+				local tokStr: string = if numStr == "" then (if concattableTokens[curToken] then ("%s%s"):format(decTok, "1 ") else decTok) else ("%s%s "):format(decTok, numStr)
 				native = ("%s%s"):format(native, tokStr)
 				
 				curToken = token
