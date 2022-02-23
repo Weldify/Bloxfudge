@@ -87,7 +87,7 @@ print(("[TRANSPILE]: %.8fs"):format(Avg(trplTimes)))
 print(("[RUN]: %.8fs"):format(Avg(runTimes)))
 
 --output on my machine:
-	[BYTECODE]: 0.00011561s
-  	[TRANSPILE]: 0.00005262s
-  	[RUN]: 0.00023638s
+--	[BYTECODE]: 0.00011561s
+-- 	[TRANSPILE]: 0.00005262s
+--  	[RUN]: 0.00023638s
 ```
